@@ -80,7 +80,7 @@ export default function ChatSidebar({ chats, selectedChatId, onSelectChat, onClo
                 ${selectedChatId === chat.id ? "bg-[#002856]" : ""}
               `}
             >
-              {/* Chat item content would go here */}
+              
             </div>
           ))
         )}
@@ -89,7 +89,7 @@ export default function ChatSidebar({ chats, selectedChatId, onSelectChat, onClo
       {/* Footer */}
       <div className="p-4 border-t border-[#002856]">
         <div className="text-center text-xs text-gray-300">
-          <p>ቡና ጠጡ v1.0</p>
+          <p>ቡና ጠጡ</p>
         </div>
       </div>
     </div>

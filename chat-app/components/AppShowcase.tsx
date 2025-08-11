@@ -12,25 +12,25 @@ import "swiper/css/pagination"
 const showcaseImages = [
   {
     id: 1,
-    src: "/mobile-chat-dark.png",
+    src: "/",
     alt: "Chat Interface Screenshot 1",
     title: "Modern Chat Interface",
   },
   {
     id: 2,
-    src: "/messaging-app-sidebar.png",
+    src: "/",
     alt: "Chat Interface Screenshot 2",
     title: "Organized Conversations",
   },
   {
     id: 3,
-    src: "/group-chat-mobile-app.png",
+    src: "/",
     alt: "Chat Interface Screenshot 3",
     title: "Group Messaging",
   },
   {
     id: 4,
-    src: "/chat-app-profile.png",
+    src: "/",
     alt: "Chat Interface Screenshot 4",
     title: "User Profiles",
   },
