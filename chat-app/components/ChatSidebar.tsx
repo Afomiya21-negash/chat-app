@@ -15,7 +15,7 @@ export default function ChatSidebar({ chats, selectedChatId, onSelectChat, onClo
     <div className="h-full bg-[#002F63] text-white flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-[#002856] flex justify-between items-center">
-        <h2 className="text-xl font-semibold">ቡና ጠጡ</h2>
+        <h2 className="text-xl font-semibold"><img src="/coffee cup.jpg" alt="Logo" className="w-10 h-10 inline-block boarder-2 border-white rounded-full mr-2"/>ቡና ጠጡ</h2>
         <button onClick={onClose} className="lg:hidden p-1 hover:bg-[#002856] rounded">
           <X size={20} />
         </button>
