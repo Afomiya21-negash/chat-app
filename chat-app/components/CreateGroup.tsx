@@ -15,10 +15,11 @@ type Chat = {
 
 interface CreateGroupProps {
   token: string | null
+  me: ChatUser | null   // ✅ me is expected here
   onCreated: (chat: Chat) => void
 }
 
-export default function CreateGroup({ token, onCreated }: CreateGroupProps) {
+export default function CreateGroup({ token, me, onCreated }: CreateGroupProps) {  // ✅ add `me`
   const [name, setName] = useState("")
   const [searchName, setSearchName] = useState("")
   const [searchResult, setSearchResult] = useState<ChatUser | null>(null)
@@ -58,7 +59,7 @@ export default function CreateGroup({ token, onCreated }: CreateGroupProps) {
   }
 
   const create = async () => {
-    if (!token) return
+    if (!token || !me) return    // ✅ make sure me exists
     if (!name.trim()) {
       alert("Enter group name")
       return
@@ -73,7 +74,7 @@ export default function CreateGroup({ token, onCreated }: CreateGroupProps) {
       const memberIds = members.map((m) => m.id)
       const res = await axios.post<Chat>(
         "/api/groups",
-        { name, memberIds },
+        { name, memberIds, creatorId: me.id },   // ✅ now safe to use me.id
         { headers: { Authorization: `Bearer ${token}` } },
       )
 

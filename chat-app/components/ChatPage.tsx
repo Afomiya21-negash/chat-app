@@ -479,15 +479,17 @@ export default function ChatPage() {
               </button>
             </div>
             <CreateGroup
-              token={token}
-              onCreated={async (chat) => {
-                setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
-                setActiveChat(chat)
-                await loadMessages(chat.id)
-                setShowGroupModal(false)
-                setActiveSection("groups")
-              }}
-            />
+  token={token}
+  me={me}   // ✅ send the logged-in user
+  onCreated={async (chat) => {
+    setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
+    setActiveChat(chat)
+    await loadMessages(chat.id)
+    setShowGroupModal(false)
+    setActiveSection("groups")
+  }}
+/>
+
           </div>
         </div>
       )}

@@ -16,24 +16,26 @@ datasource db {
 }
  
 model User {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique
-  email      String    @unique
-  password   String
-  createdAt  DateTime  @default(now())
-  chats      Chat[]    @relation("UserChats")
-  messages   Message[]
+  id            Int       @id @default(autoincrement())
+  username      String    @unique
+  email         String    @unique
+  password      String
+  createdAt     DateTime  @default(now())
+  chats         Chat[]    @relation("UserChats")       // all chats the user is part of
+  messages      Message[]
+  createdGroups Chat[]    @relation("Creator")        // groups this user created
 }
 
 model Chat {
   id        Int       @id @default(autoincrement())
-  type      String    // "private" or "group"
-  name      String?   // group name for group chats
-  users     User[]    @relation("UserChats")
+  type      String    // 'private' | 'group'
+  name      String?   // group name
+  users     User[]    @relation("UserChats")          // implicit many-to-many, no references
   messages  Message[]
+  creator   User?     @relation("Creator", fields: [creatorId], references: [id])
+  creatorId Int?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  
 }
 
 model Message {
@@ -45,4 +47,3 @@ model Message {
   content   String
   createdAt DateTime @default(now())
 }
-
