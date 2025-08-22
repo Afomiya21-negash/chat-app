@@ -13,19 +13,12 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">ቡና ጠጡ</h1>
-          <p className="text-gray-600">Welcome back! Please login to your account.</p>
+   <LoginForm />
         </div>
 
-        <LoginForm />
+       
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-[#002F63] hover:text-[#002856] font-medium">
-              Create Account
-            </Link>
-          </p>
-        </div>
+        
       </div>
     </div>
   )
