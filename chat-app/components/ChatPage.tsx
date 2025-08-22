@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
 import axios from "axios"
-import { Users, MessageCircle, Send, X, Menu, User, LogOut, Search } from "lucide-react"
+import { Users, MessageCircle, Send, X, Menu, User, LogOut, Search, MoreVertical } from "lucide-react"
 import CreateGroup from "./CreateGroup"
+import AddGroupMember from "./AddGroupMember"
 
 type ChatUser = { id: number; username: string }
 type Message = {
@@ -38,7 +39,8 @@ export default function ChatPage() {
   const [searchResults, setSearchResults] = useState<ChatUser[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
-
+ const [showAddMemberModal, setShowAddMemberModal] = useState(false)
+  const [addMemberGroup, setAddMemberGroup] = useState<Chat | null>(null)
   const privateChats = chats.filter((chat) => chat.type === "private")
   const groupChats = chats.filter((chat) => chat.type === "group")
   const currentChats = activeSection === "chats" ? privateChats : groupChats
@@ -387,7 +389,66 @@ export default function ChatPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="w-2 h-2 bg-[#002F63] rounded-full ml-2"></div>
+                      {c.type === "group" ? (
+                        <div className="relative group">
+                          <button 
+                            className="p-1 text-gray-400 hover:text-white focus:outline-none"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActiveChat(activeChat?.id === c.id && document.getElementById(`group-menu-${c.id}`)?.classList.contains('hidden') ? null : c)
+                              const menu = document.getElementById(`group-menu-${c.id}`)
+                              menu?.classList.toggle('hidden')
+                            }}
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                          <div 
+                            id={`group-menu-${c.id}`}
+                            className={`absolute right-0 mt-1 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 hidden ${activeChat?.id === c.id ? 'block' : ''}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button 
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                              onClick={(e) => {
+                                 e.stopPropagation()
+                              setAddMemberGroup(c)
+                              setShowAddMemberModal(true)
+                                
+                                document.getElementById(`group-menu-${c.id}`)?.classList.add('hidden')
+                              }}
+                            >
+                              Add new member
+                              
+                            </button>
+                            <button 
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (confirm('Are you sure you want to leave this group?')) {
+                                
+                                }
+                                document.getElementById(`group-menu-${c.id}`)?.classList.add('hidden')
+                              }}
+                            >
+                              Leave group
+                            </button>
+                            <button 
+                              className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
+                                
+                                }
+                                document.getElementById(`group-menu-${c.id}`)?.classList.add('hidden')
+                              }}
+                            >
+                              Delete group
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-2 h-2 bg-[#002F63] rounded-full ml-2"></div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -492,6 +553,22 @@ export default function ChatPage() {
 
           </div>
         </div>
+      )}
+       {showAddMemberModal && addMemberGroup && (
+        <AddGroupMember
+          token={token}
+          groupId={addMemberGroup.id}
+          currentMembers={addMemberGroup.users}
+          onMemberAdded={async () => {
+            await loadChats(token!)
+            setShowAddMemberModal(false)
+            setAddMemberGroup(null)
+          }}
+          onClose={() => {
+            setShowAddMemberModal(false)
+            setAddMemberGroup(null)
+          }}
+        />
       )}
     </div>
   )
