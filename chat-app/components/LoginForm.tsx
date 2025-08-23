@@ -12,41 +12,30 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!email.trim() || !password) {
-      alert("Please fill in both email and password")
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      })
-
-      const data = await res.json()
-
-      if (data.token) {
-        localStorage.setItem("token", data.token)
-        console.log("Token saved in login:", localStorage.getItem("token"))
-        localStorage.setItem("user", JSON.stringify(data.user))
-        alert("Login successful!")
-        router.push("/chat")
-      } else {
-        alert(data.error || "Login failed")
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      alert("An error occurred during login")
-    } finally {
-      setIsLoading(false)
-    }
+  const handleLogin = async () => {
+  if (!email.trim() || !password) {
+    alert('Please fill in both email and password');
+    return;
   }
+
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim(), password }),
+  });
+
+  const data = await res.json();
+
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+    console.log('Token saved in login:', localStorage.getItem('token'));
+    localStorage.setItem('user', JSON.stringify(data.user)); 
+    alert('Login successful!');
+    router.push('/chat');
+  } else {
+    alert(data.error || 'Login failed');
+  }
+};
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -56,7 +45,13 @@ export default function LoginForm() {
           <p className="text-gray-600">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form
+  onSubmit={async (e) => {
+    e.preventDefault(); // stop full page reload & query params
+   
+  }}
+  className="space-y-6"
+>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -89,17 +84,18 @@ export default function LoginForm() {
                 required
               />
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+  type="button" // must be type="button"
+  onClick={() => setShowPassword(!showPassword)}
+  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+>
+  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+</button>
+
             </div>
           </div>
 
           <button
-            type="submit"
+            onClick={handleLogin}
             disabled={isLoading}
             className="w-full bg-[#002F63] hover:bg-[#002856] text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
