@@ -389,57 +389,63 @@ export default function ChatPage() {
                           </div>
                         </div>
                       </div>
-                      {c.type === "group" ? (
+                     {c.type === "group" ? (
                         <div className="relative group">
-                          <button 
+                          <button
                             className="p-1 text-gray-400 hover:text-white focus:outline-none"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setActiveChat(activeChat?.id === c.id && document.getElementById(`group-menu-${c.id}`)?.classList.contains('hidden') ? null : c)
                               const menu = document.getElementById(`group-menu-${c.id}`)
-                              menu?.classList.toggle('hidden')
+                              // Close all other menus first
+                              document.querySelectorAll('[id^="group-menu-"]').forEach((m) => {
+                                if (m.id !== `group-menu-${c.id}`) {
+                                  m.classList.add("hidden")
+                                }
+                              })
+                              // Toggle current menu
+                              menu?.classList.toggle("hidden")
                             }}
                           >
                             <MoreVertical className="w-5 h-5" />
                           </button>
-                          <div 
+                          <div
                             id={`group-menu-${c.id}`}
-                            className={`absolute right-0 mt-1 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 hidden ${activeChat?.id === c.id ? 'block' : ''}`}
+                            className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 hidden"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <button 
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
-                              onClick={(e) => {
-                                 e.stopPropagation()
-                              setAddMemberGroup(c)
-                              setShowAddMemberModal(true)
-                                
-                                document.getElementById(`group-menu-${c.id}`)?.classList.add('hidden')
-                              }}
-                            >
-                              Add new member
-                              
-                            </button>
-                            <button 
+                            <button
                               className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (confirm('Are you sure you want to leave this group?')) {
-                                
+                            
+                                setShowAddMemberModal(true)
+                                document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
+                              }}
+                            >
+                              Add new member
+                            </button>
+                            <button
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (confirm("Are you sure you want to leave this group?")) {
+                                  alert("Leave group functionality will be implemented here")
                                 }
-                                document.getElementById(`group-menu-${c.id}`)?.classList.add('hidden')
+                                document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
                               }}
                             >
                               Leave group
                             </button>
-                            <button 
+                            <button
                               className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
-                                
+                                if (
+                                  confirm("Are you sure you want to delete this group? This action cannot be undone.")
+                                ) {
+                                  alert("Delete group functionality will be implemented here")
                                 }
-                                document.getElementById(`group-menu-${c.id}`)?.classList.add('hidden')
+                                document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
                               }}
                             >
                               Delete group
@@ -541,7 +547,7 @@ export default function ChatPage() {
             </div>
             <CreateGroup
   token={token}
-  me={me}   // ✅ send the logged-in user
+  me={me}   //  send the logged-in user
   onCreated={async (chat) => {
     setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
     setActiveChat(chat)
