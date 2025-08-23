@@ -45,24 +45,25 @@ export default function AddGroupMember({ token, groupId, currentMembers, onMembe
     }
   }
 
-  const addMember = async (user: ChatUser) => {
-    if (!token) return
-    setLoading(true)
-    try {
-      await axios.post(
-        `/api/groups/${groupId}/members`,
-        { userId: user.id },
-        { headers: { Authorization: `Bearer ${token}` } },
-      )
-      onMemberAdded()
-      setSearchName("")
-      setSearchResult(null)
-    } catch (e) {
-      setError("Failed to add member")
-    } finally {
-      setLoading(false)
-    }
+ const addMember = async (user: ChatUser) => {
+  if (!token) return
+  setLoading(true)
+  try {
+    await axios.put(
+      "/api/groups/add",
+      { chatId: groupId, userId: user.id }, // 👈 backend expects both
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    onMemberAdded()
+    setSearchName("")
+    setSearchResult(null)
+    alert('Member added successfully!');
+  } catch (e:any) {
+   alert(e.response?.data?.message || e.response?.data?.error || "Failed to add member")
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

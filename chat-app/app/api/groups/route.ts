@@ -24,6 +24,9 @@ async function handler(req: NextRequest, user: any) {
         users: {
           connect: uniqueMemberIds.map((id) => ({ id })),
         },
+        creator: {
+          connect: { id: user.id },
+        },
       },
       include: {
         users: { select: { id: true, username: true } },
@@ -38,3 +41,4 @@ async function handler(req: NextRequest, user: any) {
 }
 
 export const POST = withAuth(handler);
+

@@ -413,43 +413,100 @@ export default function ChatPage() {
                             className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 hidden"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <button
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                            
-                                setShowAddMemberModal(true)
-                                document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
-                              }}
-                            >
-                              Add new member
-                            </button>
-                            <button
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (confirm("Are you sure you want to leave this group?")) {
-                                  alert("Leave group functionality will be implemented here")
-                                }
-                                document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
-                              }}
-                            >
-                              Leave group
-                            </button>
-                            <button
-                              className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (
-                                  confirm("Are you sure you want to delete this group? This action cannot be undone.")
-                                ) {
-                                  alert("Delete group functionality will be implemented here")
-                                }
-                                document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
-                              }}
-                            >
-                              Delete group
-                            </button>
+                          <button
+  className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+  onClick={(e) => {
+    e.stopPropagation()
+
+    setAddMemberGroup(c)          // ✅ store the group being modified
+    setShowAddMemberModal(true)   // ✅ then open modal
+
+    document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
+  }}
+>
+  Add new member
+</button>
+
+                               <button
+  className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+  onClick={async (e) => {
+    e.stopPropagation()
+
+    if (!token) return
+
+    if (confirm("Are you sure you want to leave this group?")) {
+      try {
+        const res = await axios.put(
+          "/api/groups/leave",
+          { chatId: c.id }, // ✅ only send chatId, backend extracts user from JWT
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+
+        alert("You have left the group")
+
+        // Refresh chats after leaving
+        await loadChats(token)
+
+        if (activeChat?.id === c.id) {
+          setActiveChat(null) // deselect if leaving active group
+          setMessages([])
+        }
+      } catch (err: any) {
+        console.error("Failed to leave group:", err)
+        alert(err.response?.data?.error || "Error leaving group")
+      }
+    }
+
+    document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
+  }}
+>
+  Leave group
+</button>
+
+                    <button
+  className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
+  onClick={async (e) => {
+    e.stopPropagation();
+
+    if (
+      confirm(
+        "Are you sure you want to delete this group? This action cannot be undone."
+      )
+    ) {
+      try {
+        const res = await fetch("/api/groups/delete", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // assuming you store JWT here
+          },
+          body: JSON.stringify({ chatId: c.id }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.error || "Failed to delete group");
+          return;
+        }
+
+        alert("Group deleted successfully ✅");
+        // Optional: Refresh group list after deletion
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong while deleting the group");
+      }
+    }
+
+    document
+      .getElementById(`group-menu-${c.id}`)
+      ?.classList.add("hidden");
+  }}
+>
+  Delete group
+</button>
+
                           </div>
                         </div>
                       ) : (
