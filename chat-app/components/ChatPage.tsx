@@ -1,5 +1,5 @@
 "use client"
-
+import Link from "next/link"
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
 import axios from "axios"
 import { Users, MessageCircle, Send, X, Menu, User, LogOut, Search, MoreVertical } from "lucide-react"
@@ -245,10 +245,13 @@ export default function ChatPage() {
             </div>
 
             <div className="py-2">
-              <button className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
-                <User className="w-5 h-5 mr-3 text-gray-500" />
-                My Profile
-              </button>
+             <Link href="/profile">
+  <button className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+    <User className="w-5 h-5 mr-3 text-gray-500" />
+    My Profile
+  </button>
+</Link>
+
               <button
                 onClick={handleNewGroup}
                 className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
