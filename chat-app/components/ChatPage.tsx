@@ -45,6 +45,13 @@ export default function ChatPage() {
   const groupChats = chats.filter((chat) => chat.type === "group")
   const currentChats = activeSection === "chats" ? privateChats : groupChats
 
+  // Profile modal state
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [editUsername, setEditUsername] = useState("")
+  const [editEmail, setEditEmail] = useState("")
+  const [profileEmail, setProfileEmail] = useState("")
+
   const filteredChats = currentChats.filter((chat) => {
     if (!searchQuery.trim()) return true
     const chatName =
@@ -139,6 +146,45 @@ export default function ChatPage() {
   const handleNewGroup = () => {
     setShowSidebarMenu(false)
     setShowGroupModal(true)
+  }
+
+  // Profile modal handlers
+  const openProfileModal = async () => {
+    setShowSidebarMenu(false)
+    setShowProfileModal(true)
+    setIsEditingProfile(false)
+
+    if (!token) return
+    try {
+      const res = await axios.get<{ id: number; username: string; email: string }>("/api/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setEditUsername(res.data.username)
+      setEditEmail(res.data.email)
+      setProfileEmail(res.data.email)
+    } catch (e: any) {
+      console.error("Failed to load profile:", e)
+      if (e.response?.status === 401) {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        window.location.href = "/login"
+        return
+      }
+    }
+  }
+
+  const handleEditProfile = () => setIsEditingProfile(true)
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false)
+    setEditUsername(me?.username || "")
+    setEditEmail(profileEmail)
+  }
+  const handleSaveProfile = () => {
+    // No update API yet; just update local UI state
+    if (me) setMe({ ...me, username: editUsername })
+    setProfileEmail(editEmail)
+    setIsEditingProfile(false)
+    setShowProfileModal(false)
   }
 
   const onTextChange = (e: ChangeEvent<HTMLInputElement>) => setText(e.target.value)
@@ -245,12 +291,13 @@ export default function ChatPage() {
             </div>
 
             <div className="py-2">
-             <Link href="/profile">
-  <button className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
-    <User className="w-5 h-5 mr-3 text-gray-500" />
-    My Profile
-  </button>
-</Link>
+              <button
+                onClick={openProfileModal}
+                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
+              >
+                <User className="w-5 h-5 mr-3 text-gray-500" />
+                My Profile
+              </button>
 
               <button
                 onClick={handleNewGroup}
@@ -635,6 +682,125 @@ export default function ChatPage() {
             setAddMemberGroup(null)
           }}
         />
+      )}
+     {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-white">My Profile</h3>
+              <div className="flex items-center space-x-2">
+                {!isEditingProfile ? (
+                  <button
+                    onClick={handleEditProfile}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                ) : null}
+                <button
+                  onClick={() => {
+                    setShowProfileModal(false)
+                    setIsEditingProfile(false)
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-gray-600" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-white">{me?.username}</h4>
+                  <p className="text-sm text-blue-500">online</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        value={editUsername}
+                        onChange={(e) => setEditUsername(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        placeholder="Username"
+                      />
+                    ) : (
+                      <div>
+                        <p className="text-blue-500">@{me?.username}</p>
+                        <p className="text-sm text-gray-500">Username</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    {isEditingProfile ? (
+                      <input
+                        type="email"
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        placeholder="Email"
+                      />
+                    ) : (
+                      <div>
+                        <p className="text-blue-500">{profileEmail}</p>
+                        <p className="text-sm text-gray-500">Email</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {isEditingProfile && (
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={handleSaveProfile}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
