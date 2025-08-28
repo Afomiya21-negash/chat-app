@@ -13,27 +13,31 @@ export default function LoginForm() {
   const router = useRouter()
 
   const handleLogin = async () => {
-  if (!email.trim() || !password) {
-    alert('Please fill in both email and password');
-    return;
-  }
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
 
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim(), password }),
-  });
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      alert("Server returned invalid response");
+      return;
+    }
 
-  const data = await res.json();
-
-  if (data.token) {
-    localStorage.setItem('token', data.token);
-    console.log('Token saved in login:', localStorage.getItem('token'));
-    localStorage.setItem('user', JSON.stringify(data.user)); 
-    alert('Login successful!');
-    router.push('/chat');
-  } else {
-    alert(data.error || 'Login failed');
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      router.push('/chat');
+    } else {
+      alert(data.error || 'Login failed');
+    }
+  } catch (err) {
+    console.error("Login failed:", err);
+    alert("Network error, try again.");
   }
 };
 
