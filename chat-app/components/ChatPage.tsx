@@ -5,7 +5,7 @@ import axios from "axios"
 import { Users, MessageCircle, Send, X, Menu, User, LogOut, Search, MoreVertical } from "lucide-react"
 import CreateGroup from "./CreateGroup"
 import AddGroupMember from "./AddGroupMember"
-
+import RemoveMembersModal from "./RemoveGroupMembers"
 type ChatUser = { id: number; username: string }
 type Message = {
   id: number
@@ -23,6 +23,7 @@ type Chat = {
   name?: string
   users: ChatUser[]
   messages?: Message[]
+  creatorId?: number  
 }
 
 export default function ChatPage() {
@@ -36,7 +37,10 @@ export default function ChatPage() {
   const [activeSection, setActiveSection] = useState<"chats" | "groups">("chats")
   const [searchQuery, setSearchQuery] = useState("")
   const [showGroupModal, setShowGroupModal] = useState(false)
+   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [searchResults, setSearchResults] = useState<ChatUser[]>([])
+  const [removeMemberGroup, setRemoveMemberGroup] = useState<Chat | null>(null)
+
   const [isSearching, setIsSearching] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
@@ -412,105 +416,108 @@ export default function ChatPage() {
                             <MoreVertical className="w-5 h-5" />
                           </button>
                           <div
-                            id={`group-menu-${c.id}`}
-                            className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 hidden"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                          <button
+  id={`group-menu-${c.id}`}
+  className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 hidden"
+  onClick={(e) => e.stopPropagation()}
+>
+  {/* Add member (always visible) */}
+  <button
+    className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+    onClick={(e) => {
+      e.stopPropagation()
+      setAddMemberGroup(c)
+      setShowAddMemberModal(true)
+      document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
+    }}
+  >
+    Add new member
+  </button>
+
+  {/* If creator → Delete + Remove buttons */}
+  {c.creatorId === me?.id ? (
+    <>
+      <button
+        className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
+        onClick={async (e) => {
+          e.stopPropagation()
+          if (confirm("Delete this group permanently?")) {
+            try {
+              const res = await fetch("/api/groups/delete", {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ chatId: c.id }),
+              })
+              if (!res.ok) {
+                alert("Failed to delete group")
+                return
+              }
+              alert("Group deleted ✅")
+              await loadChats(token!)
+              if (activeChat?.id === c.id) {
+                setActiveChat(null)
+                setMessages([])
+              }
+            } catch (err) {
+              console.error(err)
+              alert("Error deleting group")
+            }
+          }
+          document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
+        }}
+      >
+        Delete group
+      </button>
+  <>
+     <button
   className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
   onClick={(e) => {
     e.stopPropagation()
-
-    setAddMemberGroup(c)          // ✅ store the group being modified
-    setShowAddMemberModal(true)   // ✅ then open modal
-
+    setRemoveMemberGroup(c)   // store the clicked group
+    setShowRemoveModal(true)  // open modal
     document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
   }}
 >
-  Add new member
+  Remove members
 </button>
 
-                               <button
-  className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
-  onClick={async (e) => {
-    e.stopPropagation()
 
-    if (!token) return
-
-    if (confirm("Are you sure you want to leave this group?")) {
-      try {
-        const res = await axios.put(
-          "/api/groups/leave",
-          { chatId: c.id }, // ✅ only send chatId, backend extracts user from JWT
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-
-        alert("You have left the group")
-
-        // Refresh chats after leaving
-        await loadChats(token)
-
-        if (activeChat?.id === c.id) {
-          setActiveChat(null) // deselect if leaving active group
-          setMessages([])
+      
+    </>
+      
+    </>
+  ) : (
+    // Else → just Leave button
+    <button
+      className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+      onClick={async (e) => {
+        e.stopPropagation()
+        if (confirm("Leave this group?")) {
+          try {
+            await axios.put(
+              "/api/groups/leave",
+              { chatId: c.id },
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+            await loadChats(token!)
+            if (activeChat?.id === c.id) {
+              setActiveChat(null)
+              setMessages([])
+            }
+          } catch (err) {
+            console.error("Failed to leave group:", err)
+          }
         }
-      } catch (err: any) {
-        console.error("Failed to leave group:", err)
-        alert(err.response?.data?.error || "Error leaving group")
-      }
-    }
+        document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
+      }}
+    >
+      Leave group
+    </button>
+  )}
+</div>
 
-    document.getElementById(`group-menu-${c.id}`)?.classList.add("hidden")
-  }}
->
-  Leave group
-</button>
-
-                    <button
-  className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
-  onClick={async (e) => {
-    e.stopPropagation();
-
-    if (
-      confirm(
-        "Are you sure you want to delete this group? This action cannot be undone."
-      )
-    ) {
-      try {
-        const res = await fetch("/api/groups/delete", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // assuming you store JWT here
-          },
-          body: JSON.stringify({ chatId: c.id }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          alert(data.error || "Failed to delete group");
-          return;
-        }
-
-        alert("Group deleted successfully ✅");
-        // Optional: Refresh group list after deletion
-        window.location.reload();
-      } catch (err) {
-        console.error(err);
-        alert("Something went wrong while deleting the group");
-      }
-    }
-
-    document
-      .getElementById(`group-menu-${c.id}`)
-      ?.classList.add("hidden");
-  }}
->
-  Delete group
-</button>
-
-                          </div>
                         </div>
                       ) : (
                         <div className="w-2 h-2 bg-[#002F63] rounded-full ml-2"></div>
@@ -636,6 +643,23 @@ export default function ChatPage() {
           }}
         />
       )}
+      {showRemoveModal && removeMemberGroup && (
+  <RemoveMembersModal
+    token={token}
+    groupId={removeMemberGroup.id}         // ✅ correct prop
+    currentMembers={removeMemberGroup.users}
+    onClose={() => {
+      setShowRemoveModal(false)
+      setRemoveMemberGroup(null)
+    }}
+    onMemberRemoved={async () => {
+      await loadChats(token!)
+      setShowRemoveModal(false)
+      setRemoveMemberGroup(null)
+    }}
+  />
+)}
+
     </div>
   )
 }
