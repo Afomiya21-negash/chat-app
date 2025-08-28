@@ -270,7 +270,15 @@ export default function ChatPage() {
 
     return () => clearTimeout(timeoutId)
   }, [searchQuery, activeSection, token])
+ useEffect(() => {
+  const interval = setInterval(() => {
+    if (activeChat) {
+      loadMessages(activeChat.id);
+    }
+  }, 2000); // every 2 seconds
 
+  return () => clearInterval(interval);
+}, [activeChat]);
   return (
     <div className="min-h-screen bg-black relative">
       <div className="fixed top-4 left-4 z-50">
