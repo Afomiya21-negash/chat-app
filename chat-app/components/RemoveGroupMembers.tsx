@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react"
 import axios from "axios"
+import { useState } from "react" // Import useState
 
 type ChatUser = { id: number; username: string }
 
@@ -9,6 +10,7 @@ interface ManageGroupMembersProps {
   token: string | null
   groupId: number
   currentMembers: ChatUser[]
+  creatorId: number // Add creatorId as a prop
   onMemberRemoved: () => void
   onClose: () => void
 }
@@ -17,9 +19,15 @@ export default function RemoveGroupMembers({
   token,
   groupId,
   currentMembers,
+  creatorId, // Use the new prop
   onMemberRemoved,
   onClose,
 }: ManageGroupMembersProps) {
+  // Add a local state to manage the list of members to display
+  const [membersToDisplay, setMembersToDisplay] = useState(
+    currentMembers.filter((m) => m.id !== creatorId)
+  )
+
   const removeMember = async (userId: number) => {
     if (!token) return
     if (!confirm("Are you sure you want to remove this member?")) return
@@ -30,6 +38,8 @@ export default function RemoveGroupMembers({
         { headers: { Authorization: `Bearer ${token}` } }
       )
       alert("Member removed ✅")
+      // Update the local state to remove the member instantly
+      setMembersToDisplay(membersToDisplay.filter((m) => m.id !== userId))
       onMemberRemoved()
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to remove member")
@@ -47,7 +57,7 @@ export default function RemoveGroupMembers({
         </div>
 
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {currentMembers.map((m) => (
+          {membersToDisplay.map((m) => (
             <div
               key={m.id}
               className="flex justify-between items-center bg-gray-700 p-3 rounded-lg"

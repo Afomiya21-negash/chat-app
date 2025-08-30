@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../lib/db";
 import { withAuth } from "../../../middlewares/auth";
-import bcrypt from "bcryptjs";
 
 async function putHandler(req: NextRequest, user: any) {
   if (req.method !== 'PUT') {
@@ -9,10 +8,10 @@ async function putHandler(req: NextRequest, user: any) {
   }
 
   try {
-    const { username, email, password } = await req.json();
+    const { username, email } = await req.json();
 
     // Validate that at least one field is provided
-    if (!username && !email && !password) {
+    if (!username && !email) {
       return NextResponse.json({ error: 'At least one field must be provided' }, { status: 400 });
     }
 
@@ -65,17 +64,6 @@ async function putHandler(req: NextRequest, user: any) {
       updateData.email = email.trim();
     }
 
-    // Handle password update
-    if (password) {
-      if (password.length < 8) {
-        return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
-      }
-
-      // Hash the new password
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updateData.password = hashedPassword;
-    }
-
     // Update user if there are changes
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No changes to update' }, { status: 400 });
@@ -118,7 +106,30 @@ async function deleteHandler(req: NextRequest, user: any) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Delete all user's messages first
+    // Disconnect the user from all chats they are a member of
+    const chats = await prisma.chat.findMany({
+      where: {
+        users: {
+          some: {
+            id: user.id,
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    for (const chat of chats) {
+      await prisma.chat.update({
+        where: { id: chat.id },
+        data: {
+          users: {
+            disconnect: { id: user.id },
+          },
+        },
+      });
+    }
+
+    // Delete all user's messages
     await prisma.message.deleteMany({
       where: { senderId: user.id }
     });
@@ -131,13 +142,13 @@ async function deleteHandler(req: NextRequest, user: any) {
       }
     });
 
-    // Finally delete the user (this will cascade to remove from chats)
+    // Finally delete the user
     await prisma.user.delete({
       where: { id: user.id }
     });
 
     return NextResponse.json({
-      message: 'Account deleted successfully'
+      message: 'Account and associated data deleted successfully'
     });
 
   } catch (err: any) {

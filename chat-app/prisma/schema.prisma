@@ -42,8 +42,13 @@ model Message {
   id        Int      @id @default(autoincrement())
   chat      Chat     @relation(fields: [chatId], references: [id])
   chatId    Int
+
   sender    User     @relation(fields: [senderId], references: [id])
   senderId  Int
-  content   String
-  createdAt DateTime @default(now())
+
+  content   String?
+  type      String     @default("text") // "text" | "image" | "pdf" | "file"
+  fileData  Bytes?
+  fileName  String?
+  createdAt DateTime   @default(now())
 }

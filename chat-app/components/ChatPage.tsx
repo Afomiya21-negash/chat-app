@@ -6,17 +6,22 @@ import { Users, MessageCircle, Send, X, Menu, User, LogOut, Search, MoreVertical
 import CreateGroup from "./CreateGroup"
 import AddGroupMember from "./AddGroupMember"
 import RemoveMembersModal from "./RemoveGroupMembers"
+
 type ChatUser = { id: number; username: string }
+type UserType = { id: number; username: string } // Define a type for user info
+
 type Message = {
-  id: number
-  chatId: number
-  senderId: number
-  sender?: ChatUser
-  senderName?: string
-  content: string
-  createdAt?: string
-  ts?: string
-}
+    id: number;
+    chatId: number;
+    senderId: number;
+    sender?: UserType;
+    senderName?: string;
+    content?: string | null;
+    type: 'text' | 'image' | 'pdf' | 'file';
+    fileName?: string | null;
+    createdAt?: string;
+    ts?: string;
+};
 type Chat = {
   id: number
   type: "private" | "group"
@@ -40,7 +45,7 @@ export default function ChatPage() {
    const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [searchResults, setSearchResults] = useState<ChatUser[]>([])
   const [removeMemberGroup, setRemoveMemberGroup] = useState<Chat | null>(null)
-
+  const [file, setFile] = useState<File | null>(null);
   const [isSearching, setIsSearching] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
@@ -66,81 +71,136 @@ export default function ChatPage() {
   })
 
   useEffect(() => {
-    const t = localStorage.getItem("token")
-    const u = localStorage.getItem("user")
+        const t = localStorage.getItem('token');
+        const u = localStorage.getItem('user');
 
-    if (!t || !u) {
-      window.location.href = "/login"
-      return
+        if (!t || !u) {
+            window.location.href = '/login';
+            return;
+        }
+
+        setToken(t);
+        setMe(JSON.parse(u));
+        loadChats(t);
+    }, []);
+
+   useEffect(() => {
+        if (!activeChat || !token) {
+            return;
+        }
+
+        const intervalId = setInterval(() => {
+            loadMessages(activeChat.id);
+        }, 3000); // Polls every 3 seconds
+
+        // Cleanup function to clear the interval when the component unmounts
+        // or when activeChat or token changes.
+        return () => clearInterval(intervalId);
+    }, [activeChat, token]);
+
+  async function loadChats(token: string) {
+        try {
+            const res = await axios.get<Chat[]>('/api/chats', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setChats(res.data);
+        } catch (e) {
+            console.error(e);
+        }
     }
-
-    setToken(t)
-    setMe(JSON.parse(u))
-    loadChats(t)
-  }, [])
 
   
-  async function loadChats(token: string) {
-    try {
-      const res = await axios.get<Chat[]>("/api/chats", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setChats(res.data)
-    } catch (e: any) {
-      console.error("Failed to load chats:", e)
-      if (e.response?.status === 401) {
-        console.log("Token expired or invalid, redirecting to login...")
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.location.href = "/login"
-        return
-      }
+    async function loadMessages(chatId: number) {
+        if (!token) return;
+        try {
+            const m = await axios.get<Message[]>(`/api/chats/messages?chatId=${chatId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setMessages(m.data);
+            setTimeout(() => {
+                messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight });
+            }, 50);
+        } catch (e) {
+            console.error(e);
+        }
     }
-  }
 
-  async function loadMessages(chatId: number) {
-    if (!token) return
-    try {
-      const m = await axios.get<Message[]>(`/api/chats/messages?chatId=${chatId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setMessages(m.data)
-      setTimeout(() => {
-        messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
-      }, 50)
-    } catch (e: any) {
-      console.error("Failed to load messages:", e)
-      if (e.response?.status === 401) {
-        console.log("Token expired or invalid, redirecting to login...")
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.location.href = "/login"
-        return
-      }
-    }
-  }
+    async function downloadFile(messageId: number, fileName: string | null) {
+        if (!token) return;
+        try {
+            const response = await fetch(`/api/chats/messages/download?messageId=${messageId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
-  async function send() {
-    if (!activeChat || !text.trim() || !token) return
-    try {
-      await axios.post(
-        "/api/chats/messages",
-        { chatId: activeChat.id, content: text },
-        { headers: { Authorization: `Bearer ${token}` } },
-      )
-      setText("")
-      await loadMessages(activeChat.id)
-      await loadChats(token)
-    } catch (e: any) {
-      console.error("Failed to send message:", e)
-      if (e.response?.status === 401) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.location.href = "/login"
-        return
-      }
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName || 'download';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                console.error('Download failed:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+        }
     }
-  }
+
+    async function send() {
+        if (!activeChat || !token) return;
+        if (text.trim() === '' && !file) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('chatId', String(activeChat.id));
+
+            if (file) {
+                formData.append('file', file);
+                const fileType = file.type.split('/')[0];
+                if (fileType === 'image') {
+                    formData.append('type', 'image');
+                } else if (file.type === 'application/pdf') {
+                    formData.append('type', 'pdf');
+                } else {
+                    formData.append('type', 'file');
+                }
+            } else {
+                formData.append('content', text);
+                formData.append('type', 'text');
+            }
+
+            await axios.post(
+                '/api/chats/messages',
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            setText('');
+            setFile(null);
+            // After sending, manually refresh messages to see the new one immediately
+            await loadMessages(activeChat.id);
+            await loadChats(token);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+   
+    const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+            setText('');
+        }
+    };
 
   const handleLogout = () => {
     localStorage.removeItem("token")
@@ -184,19 +244,44 @@ export default function ChatPage() {
     setEditUsername(me?.username || "")
     setEditEmail(profileEmail)
   }
-  const handleSaveProfile = () => {
-    // No update API yet; just update local UI state
-    if (me) setMe({ ...me, username: editUsername })
-    setProfileEmail(editEmail)
-    setIsEditingProfile(false)
-    setShowProfileModal(false)
+ const handleSaveProfile = async () => {
+    if (!token) return
+    try {
+      await axios.put(
+        "/api/users/update",
+        { username: editUsername, email: editEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert("Profile updated successfully!")
+      setProfileEmail(editEmail)
+      setIsEditingProfile(false)
+      setShowProfileModal(false)
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to update profile")
+    }
   }
-
   const onTextChange = (e: ChangeEvent<HTMLInputElement>) => setText(e.target.value)
   const onTextKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") send()
   }
-
+  const handleDeleteAccount = async () => {
+    if (!token) return
+    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      return
+    }
+    try {
+      await axios.delete(
+        "/api/users/update",
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert("Account deleted successfully!")
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to delete account")
+    }
+  }
   async function searchUsers(query: string) {
     if (!token || !query.trim()) {
       setSearchResults([])
@@ -270,15 +355,7 @@ export default function ChatPage() {
 
     return () => clearTimeout(timeoutId)
   }, [searchQuery, activeSection, token])
- useEffect(() => {
-  const interval = setInterval(() => {
-    if (activeChat) {
-      loadMessages(activeChat.id);
-    }
-  }, 2000); // every 2 seconds
 
-  return () => clearInterval(interval);
-}, [activeChat]);
   return (
     <div className="min-h-screen bg-black relative">
       <div className="fixed top-4 left-4 z-50">
@@ -615,45 +692,88 @@ export default function ChatPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                {messages.map((m) => (
-                  <div key={m.id} className={`flex ${m.senderId === me?.id ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-xs lg:max-w-md ${m.senderId === me?.id ? "order-2" : "order-1"}`}>
-                      <div className="text-xs text-gray-400 mb-1">
-                        <strong>{m.sender?.username || m.senderName}</strong> •{" "}
-                        {new Date(m.createdAt || m.ts || "").toLocaleString()}
-                      </div>
-                      <div
-                        className={`p-3 rounded-lg ${
-                          m.senderId === me?.id ? "bg-[#002F63] text-white" : "bg-gray-800 text-white"
-                        }`}
-                      >
-                        {m.content}
-                      </div>
+              <div className="flex-1 p-4 overflow-auto" ref={messagesRef}>
+                        {messages.map((m) => (
+                            <div
+                                key={m.id}
+                                className={`mb-2 max-w-prose ${
+                                    m.senderId === me?.id ? 'ml-auto text-right' : ''
+                                }`}
+                            >
+                                <div className="text-xs text-gray-600">
+                                    <strong>{m.sender?.username || m.senderName}</strong> •{' '}
+                                    {new Date(m.createdAt || m.ts || '').toLocaleString()}
+                                </div>
+                                {m.type === 'text' ? (
+                                    <div className="p-2 bg-gray-100 rounded inline-block">
+                                        {m.content}
+                                    </div>
+                                ) : (
+                                    <div className="p-2 bg-blue-100 rounded inline-block">
+                                        {m.type === 'image' ? (
+                                            <a
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    downloadFile(m.id, m.fileName ?? null);
+                                                }}
+                                            >
+                                                <img
+                                                    src={`/api/chats/messages/download?messageId=${m.id}`}
+                                                    alt={m.fileName || 'Image'}
+                                                    className="max-w-xs cursor-pointer"
+                                                />
+                                            </a>
+                                        ) : (
+                                            <button
+                                                onClick={() => downloadFile(m.id, m.fileName ?? null)}
+                                                className="text-blue-600 underline flex items-center gap-1"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                                {m.fileName}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
-                  </div>
-                ))}
-              </div>
             )}
           </div>
 
           {activeChat && (
             <div className="p-4 border-t border-gray-700 bg-gray-900">
-              <div className="flex gap-2">
-                <input
-                  value={text}
-                  onChange={onTextChange}
-                  onKeyDown={onTextKeyDown}
-                  className="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#002F63]"
-                  placeholder="Type a message..."
-                />
-                <button
-                  onClick={send}
-                  className="bg-[#002F63] hover:bg-[#002856] text-white px-6 py-3 rounded-lg transition-colors flex items-center"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
+               <div className="p-3 border-t flex gap-2">
+                        <label className="cursor-pointer bg-gray-200 text-gray-700 px-4 py-2 rounded flex items-center">
+                            📁
+                            <input
+                                type="file"
+                                className="hidden"
+                                onChange={onFileChange}
+                            />
+                        </label>
+                        {file ? (
+                            <div className="flex-1 flex items-center gap-2 border p-2 rounded bg-gray-100">
+                                <span>{file.name}</span>
+                                <button onClick={() => setFile(null)} className="text-red-500">
+                                    &times;
+                                </button>
+                            </div>
+                        ) : (
+                            <input
+                                value={text}
+                                onChange={onTextChange}
+                                onKeyDown={onTextKeyDown}
+                                className="flex-1 p-2 border rounded"
+                                placeholder="Type message..."
+                            />
+                        )}
+                        <button onClick={send} className="bg-blue-600 text-white px-4 py-2 rounded" disabled={!text.trim() && !file}>
+                            Send
+                        </button>
+                    </div>
             </div>
           )}
         </div>
@@ -705,6 +825,7 @@ export default function ChatPage() {
     token={token}
     groupId={removeMemberGroup.id}         // ✅ correct prop
     currentMembers={removeMemberGroup.users}
+    creatorId={removeMemberGroup.creatorId!}
     onClose={() => {
       setShowRemoveModal(false)
       setRemoveMemberGroup(null)
@@ -828,6 +949,12 @@ export default function ChatPage() {
                     className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors"
                   >
                     Cancel
+                  </button>
+                   <button
+                    onClick={handleDeleteAccount}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Delete Account
                   </button>
                 </div>
               )}
