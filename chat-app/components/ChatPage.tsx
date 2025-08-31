@@ -260,9 +260,12 @@ export default function ChatPage() {
       alert(err.response?.data?.error || "Failed to update profile")
     }
   }
-  const onTextChange = (e: ChangeEvent<HTMLInputElement>) => setText(e.target.value)
-  const onTextKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") send()
+  const onTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)
+  const onTextKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      send()
+    }
   }
   const handleDeleteAccount = async () => {
     if (!token) return
@@ -408,7 +411,7 @@ export default function ChatPage() {
         )}
       </div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-12 gap-1 h-screen">
+      <div className="max-w-9xl mx-auto grid grid-cols-12 gap-1 h-screen">
         <div className="col-span-4 bg-gray-900 border-r border-gray-700">
           <div className="p-4 border-b border-gray-700 pt-20">
             <div className="flex space-x-4 mb-4">
@@ -744,36 +747,72 @@ export default function ChatPage() {
           </div>
 
           {activeChat && (
-            <div className="p-4 border-t border-gray-700 bg-gray-900">
-               <div className="p-3 border-t flex gap-2">
-                        <label className="cursor-pointer bg-gray-200 text-gray-700 px-4 py-2 rounded flex items-center">
-                            📁
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={onFileChange}
-                            />
-                        </label>
-                        {file ? (
-                            <div className="flex-1 flex items-center gap-2 border p-2 rounded bg-gray-100">
-                                <span>{file.name}</span>
-                                <button onClick={() => setFile(null)} className="text-red-500">
-                                    &times;
-                                </button>
-                            </div>
-                        ) : (
-                            <input
-                                value={text}
-                                onChange={onTextChange}
-                                onKeyDown={onTextKeyDown}
-                                className="flex-1 p-2 border rounded"
-                                placeholder="Type message..."
-                            />
-                        )}
-                        <button onClick={send} className="bg-blue-600 text-white px-4 py-2 rounded" disabled={!text.trim() && !file}>
-                            Send
-                        </button>
+            <div className="p-6 border-t border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800 shadow-lg">
+              <div className="flex items-end gap-3 p-4 bg-gray-800 rounded-2xl border border-gray-600 shadow-inner">
+               
+                <label className="cursor-pointer bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-3 rounded-xl flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                  </svg>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={onFileChange}
+                  />
+                </label>
+
+                {/* Message Input Area */}
+                <div className="flex-1 relative">
+                  {file ? (
+                    <div className="flex items-center gap-3 p-3 bg-gray-700 rounded-xl border border-gray-600 shadow-inner">
+                      <div className="flex items-center gap-2 flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-400">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        <span className="text-gray-300 text-sm font-medium truncate">{file.name}</span>
+                      </div>
+                      <button 
+                        onClick={() => setFile(null)} 
+                        className="text-red-400 hover:text-red-300 p-1 rounded-full hover:bg-red-900/30 transition-colors duration-200"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
+                  ) : (
+                    <div className="relative">
+                      <textarea
+                        value={text}
+                        onChange={onTextChange}
+                        onKeyDown={onTextKeyDown}
+                        className="w-full p-4 pr-12 bg-gray-700 text-white placeholder-gray-400 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none shadow-inner"
+                        placeholder="Type your message here..."
+                        rows={1}
+                        style={{ minHeight: '48px', maxHeight: '120px' }}
+                      />
+                      <div className="absolute right-3 bottom-3 text-xs text-gray-500">
+                        {text.length}/1000
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Send Button */}
+                <button 
+                  onClick={send} 
+                  disabled={!text.trim() && !file}
+                  className={`p-3 rounded-xl flex items-center justify-center transition-all duration-200 shadow-md transform ${
+                    text.trim() || file 
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:scale-105 hover:shadow-lg text-white' 
+                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
         </div>
