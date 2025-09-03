@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../lib/db";
 import { withAuth } from "../../../middlewares/auth";
 
-async function putHandler(req: NextRequest, user: any) {
+async function putHandler(req: NextRequest, user: unknown) {
   if (req.method !== 'PUT') {
     return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  // Type guard for user object
+  if (!user || typeof user !== 'object' || !('id' in user) || typeof user.id !== 'number') {
+    return NextResponse.json({ error: 'Invalid user data' }, { status: 400 });
   }
 
   try {
@@ -25,7 +30,7 @@ async function putHandler(req: NextRequest, user: any) {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: Record<string, string> = {};
 
     // Handle username update
     if (username && username.trim() !== existingUser.username) {
@@ -85,15 +90,20 @@ async function putHandler(req: NextRequest, user: any) {
       message: 'Profile updated successfully'
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Update user error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-async function deleteHandler(req: NextRequest, user: any) {
+async function deleteHandler(req: NextRequest, user: unknown) {
   if (req.method !== 'DELETE') {
     return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  // Type guard for user object
+  if (!user || typeof user !== 'object' || !('id' in user) || typeof user.id !== 'number') {
+    return NextResponse.json({ error: 'Invalid user data' }, { status: 400 });
   }
 
   try {
@@ -151,7 +161,7 @@ async function deleteHandler(req: NextRequest, user: any) {
       message: 'Account and associated data deleted successfully'
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Delete user error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

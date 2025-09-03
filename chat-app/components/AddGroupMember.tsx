@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -58,13 +59,8 @@ export default function AddGroupMember({ token, groupId, currentMembers, onMembe
     setSearchName("")
     setSearchResult(null)
     alert('Member added successfully!');
-  } catch (e: unknown) {
-   let errorMessage = "Failed to add member";
-   if (e && typeof e === 'object' && 'response' in e && e.response && typeof e.response === 'object' && 'data' in e.response && e.response.data && typeof e.response.data === 'object') {
-     const data = e.response.data as Record<string, unknown>;
-     errorMessage = (data.message as string) || (data.error as string) || errorMessage;
-   }
-   alert(errorMessage)
+  } catch (e:any) {
+   alert(e.response?.data?.message || e.response?.data?.error || "Failed to add member")
   } finally {
     setLoading(false)
   }

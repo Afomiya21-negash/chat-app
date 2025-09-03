@@ -229,9 +229,9 @@ export default function ChatPage() {
       setEditUsername(res.data.username)
       setEditEmail(res.data.email)
       setProfileEmail(res.data.email)
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Failed to load profile:", e)
-      if (e.response?.status === 401) {
+      if (e && typeof e === 'object' && 'response' in e && e.response && typeof e.response === 'object' && 'status' in e.response && e.response.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         window.location.href = "/login"
@@ -246,7 +246,7 @@ export default function ChatPage() {
     setEditUsername(me?.username || "")
     setEditEmail(profileEmail)
   }
-   const handleSaveProfile = async () => {
+ const handleSaveProfile = async () => {
     if (!token) return
     try {
       await axios.put(
@@ -259,7 +259,10 @@ export default function ChatPage() {
       setIsEditingProfile(false)
       setShowProfileModal(false)
     } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data ? err.response.data.error : "Failed to update profile";
+      let errorMessage = "Failed to update profile";
+      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data) {
+        errorMessage = err.response.data.error as string;
+      }
       alert(errorMessage)
     }
   }
@@ -285,7 +288,10 @@ export default function ChatPage() {
       localStorage.removeItem('user')
       window.location.href = '/login'
     } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data ? err.response.data.error : "Failed to delete account";
+      let errorMessage = "Failed to delete account";
+      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data) {
+        errorMessage = err.response.data.error as string;
+      }
       alert(errorMessage)
     }
   }
@@ -842,7 +848,7 @@ export default function ChatPage() {
   token={token}
   me={me}   //  send the logged-in user
   onCreated={async (chat) => {
-    setChats((prev) => [chat as Chat, ...prev.filter((c) => c.id !== chat.id)])
+     setChats((prev) => [chat as Chat, ...prev.filter((c) => c.id !== chat.id)])
     setActiveChat(chat as Chat)
     await loadMessages(chat.id)
     setShowGroupModal(false)
