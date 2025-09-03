@@ -16,11 +16,14 @@ const eslintConfig = [
       "@typescript-eslint/no-this-alias": "off",
       "@typescript-eslint/no-require-imports": "off", 
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/ban-types": "off",
       "react/no-unescaped-entities": "off"
     }
   }
 ];
 
 export default eslintConfig;
+
 
 
