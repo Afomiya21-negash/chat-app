@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react"
 import axios from "axios"
-import { useState } from "react" // Import useState
+import { useEffect, useState } from "react"
 
 type ChatUser = { id: number; username: string }
 
@@ -10,7 +10,7 @@ interface ManageGroupMembersProps {
   token: string | null
   groupId: number
   currentMembers: ChatUser[]
-  creatorId: number // Add creatorId as a prop
+  creatorId: number
   onMemberRemoved: () => void
   onClose: () => void
 }
@@ -19,18 +19,22 @@ export default function RemoveGroupMembers({
   token,
   groupId,
   currentMembers,
-  creatorId, // Use the new prop
+  creatorId,
   onMemberRemoved,
   onClose,
 }: ManageGroupMembersProps) {
-  // Add a local state to manage the list of members to display
-  const [membersToDisplay, setMembersToDisplay] = useState(
-    currentMembers.filter((m) => m.id !== creatorId)
-  )
+  // Local state for members (so we can remove instantly)
+  const [membersToDisplay, setMembersToDisplay] = useState<ChatUser[]>([])
+
+  // ✅ Sync with parent when currentMembers changes
+  useEffect(() => {
+    setMembersToDisplay(currentMembers.filter((m) => m.id !== creatorId))
+  }, [currentMembers, creatorId])
 
   const removeMember = async (userId: number) => {
     if (!token) return
     if (!confirm("Are you sure you want to remove this member?")) return
+
     try {
       await axios.put(
         "/api/groups/remove",
@@ -38,8 +42,11 @@ export default function RemoveGroupMembers({
         { headers: { Authorization: `Bearer ${token}` } }
       )
       alert("Member removed ✅")
-      // Update the local state to remove the member instantly
-      setMembersToDisplay(membersToDisplay.filter((m) => m.id !== userId))
+
+      // ✅ Update UI instantly
+      setMembersToDisplay((prev) => prev.filter((m) => m.id !== userId))
+
+      // ✅ Notify parent to reload chats
       onMemberRemoved()
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to remove member")
@@ -56,22 +63,26 @@ export default function RemoveGroupMembers({
           </button>
         </div>
 
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {membersToDisplay.map((m) => (
-            <div
-              key={m.id}
-              className="flex justify-between items-center bg-gray-700 p-3 rounded-lg"
-            >
-              <span className="text-white">{m.username}</span>
-              <button
-                onClick={() => removeMember(m.id)}
-                className="p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full transition-colors"
+        {membersToDisplay.length === 0 ? (
+          <div className="text-gray-400 text-center py-6">No members left</div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {membersToDisplay.map((m) => (
+              <div
+                key={m.id}
+                className="flex justify-between items-center bg-gray-700 p-3 rounded-lg"
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
+                <span className="text-white">{m.username}</span>
+                <button
+                  onClick={() => removeMember(m.id)}
+                  className="p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

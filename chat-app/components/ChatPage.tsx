@@ -84,6 +84,7 @@ export default function ChatPage() {
         loadChats(t);
     }, []);
 
+
    useEffect(() => {
         if (!activeChat || !token) {
             return;
@@ -91,6 +92,7 @@ export default function ChatPage() {
 
         const intervalId = setInterval(() => {
             loadMessages(activeChat.id);
+            
         }, 3000); // Polls every 3 seconds
 
         // Cleanup function to clear the interval when the component unmounts
@@ -416,7 +418,10 @@ export default function ChatPage() {
           <div className="p-4 border-b border-gray-700 pt-20">
             <div className="flex space-x-4 mb-4">
               <button
-                onClick={() => setActiveSection("chats")}
+                onClick={async () => {
+                  setActiveSection("chats");
+                  if (token) await loadChats(token);
+                }}
                 className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                   activeSection === "chats"
                     ? "bg-[#002F63] text-white"
@@ -427,7 +432,10 @@ export default function ChatPage() {
                 Chats
               </button>
               <button
-                onClick={() => setActiveSection("groups")}
+                onClick={async () => {
+                  setActiveSection("groups");
+                  if (token) await loadChats(token);
+                }}
                 className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                   activeSection === "groups"
                     ? "bg-[#002F63] text-white"
@@ -638,6 +646,7 @@ export default function ChatPage() {
               { headers: { Authorization: `Bearer ${token}` } }
             )
             await loadChats(token!)
+            setChats((prev) => prev.filter(chat => chat.id !== c.id))
             if (activeChat?.id === c.id) {
               setActiveChat(null)
               setMessages([])
