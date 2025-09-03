@@ -10,7 +10,7 @@ type Chat = {
   type: "private" | "group"
   name?: string
   users: ChatUser[]
-  messages?: any[]
+  messages?: unknown[]
 }
 
 interface CreateGroupProps {

@@ -48,8 +48,12 @@ export default function RemoveGroupMembers({
 
       // ✅ Notify parent to reload chats
       onMemberRemoved()
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to remove member")
+    } catch (err: unknown) {
+      let errorMessage = "Failed to remove member";
+      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data) {
+        errorMessage = err.response.data.message as string;
+      }
+      alert(errorMessage)
     }
   }
 

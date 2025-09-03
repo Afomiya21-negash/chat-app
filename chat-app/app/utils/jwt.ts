@@ -9,7 +9,7 @@ function getSecret(): string {
   return SECRET;
 }
 
-export function signToken(payload: any) {
+export function signToken(payload: Record<string, unknown>) {
   return jwt.sign(payload, getSecret(), { expiresIn: '7d' });
 }
 

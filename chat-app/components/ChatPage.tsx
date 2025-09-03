@@ -246,7 +246,7 @@ export default function ChatPage() {
     setEditUsername(me?.username || "")
     setEditEmail(profileEmail)
   }
- const handleSaveProfile = async () => {
+   const handleSaveProfile = async () => {
     if (!token) return
     try {
       await axios.put(
@@ -258,8 +258,9 @@ export default function ChatPage() {
       setProfileEmail(editEmail)
       setIsEditingProfile(false)
       setShowProfileModal(false)
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to update profile")
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data ? err.response.data.error : "Failed to update profile";
+      alert(errorMessage)
     }
   }
   const onTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)
@@ -283,8 +284,9 @@ export default function ChatPage() {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       window.location.href = '/login'
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to delete account")
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data ? err.response.data.error : "Failed to delete account";
+      alert(errorMessage)
     }
   }
   async function searchUsers(query: string) {
@@ -310,9 +312,9 @@ export default function ChatPage() {
       } else {
         setSearchResults([user])
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Failed to search users:", e)
-      if (e.response?.status === 401) {
+      if (e && typeof e === 'object' && 'response' in e && e.response && typeof e.response === 'object' && 'status' in e.response && e.response.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         window.location.href = "/login"
@@ -337,9 +339,9 @@ export default function ChatPage() {
       await loadChats(token)
       setSearchQuery("")
       setSearchResults([])
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Failed to start chat:", e)
-      if (e.response?.status === 401) {
+      if (e && typeof e === 'object' && 'response' in e && e.response && typeof e.response === 'object' && 'status' in e.response && e.response.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         window.location.href = "/login"
@@ -840,8 +842,8 @@ export default function ChatPage() {
   token={token}
   me={me}   //  send the logged-in user
   onCreated={async (chat) => {
-    setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
-    setActiveChat(chat)
+    setChats((prev) => [chat as Chat, ...prev.filter((c) => c.id !== chat.id)])
+    setActiveChat(chat as Chat)
     await loadMessages(chat.id)
     setShowGroupModal(false)
     setActiveSection("groups")

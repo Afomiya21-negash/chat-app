@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '../utils/jwt';
 
-export function withAuth(handler: Function) {
-  return async (req: NextRequest, ...args: any[]) => {
+type HandlerFunction = (req: NextRequest, user: unknown, ...args: unknown[]) => Promise<NextResponse>;
+
+export function withAuth(handler: HandlerFunction) {
+  return async (req: NextRequest, ...args: unknown[]) => {
    const authHeader = req.headers.get('authorization');
     console.log('Auth header:', authHeader);
     const token = authHeader?.split(' ')[1];
@@ -11,8 +13,9 @@ export function withAuth(handler: Function) {
     try {
   const decoded = verifyToken(token);
   return await handler(req, decoded, ...args);
-} catch (err: any) {
-  console.error('JWT Error:', err.message);
+} catch (err: unknown) {
+  const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+  console.error('JWT Error:', errorMessage);
   return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 }
 
