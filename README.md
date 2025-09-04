@@ -1,10 +1,10 @@
 Project: Chat App
-        developers
-  Name             Role
-Samuel Girma     Backend Dev
-Afomiya Mesfin   Frontend Dev
-Danayt Esayas    Frontend Dev
-Kenean Biru      Frontend Dev
+### 👥 Developers
+
+* **Samuel Girma** - Backend Developer
+* **Afomiya Mesfin** - Frontend Developer
+* **Danayt Esayas** - Frontend Developer
+* **Kenean Biru** - Frontend Developer
 
   # Buuna T'et'u Chat Application ☕💬
 
