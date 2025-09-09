@@ -246,7 +246,7 @@ export default function ChatPage() {
     setEditUsername(me?.username || "")
     setEditEmail(profileEmail)
   }
- const handleSaveProfile = async () => {
+const handleSaveProfile = async () => {
     if (!token) return
     try {
       await axios.put(
@@ -255,15 +255,30 @@ export default function ChatPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       )
       alert("Profile updated successfully!")
-      setProfileEmail(editEmail)
+      
+      // -- START of new code to add --
+      
+      // Update the 'me' state with the new username and email
+      setMe((prevMe) => {
+          if (prevMe) {
+              const updatedMe = { ...prevMe, username: editUsername, email: editEmail };
+              // Also update localStorage so the change persists on refresh
+              localStorage.setItem('user', JSON.stringify(updatedMe));
+              return updatedMe;
+          }
+          return prevMe;
+      });
+
+      // Update the profile email state for the modal view
+      setProfileEmail(editEmail);
+
+      // -- END of new code to add --
+      
       setIsEditingProfile(false)
       setShowProfileModal(false)
+
     } catch (err: unknown) {
-      let errorMessage = "Failed to update profile";
-      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data) {
-        errorMessage = err.response.data.error as string;
-      }
-      alert(errorMessage)
+      // ... (existing error handling code)
     }
   }
   const onTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)
