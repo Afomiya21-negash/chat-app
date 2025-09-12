@@ -439,36 +439,38 @@ const handleSaveProfile = async () => {
       <div className="max-w-9xl mx-auto grid grid-cols-12 gap-1 h-screen">
         <div className="col-span-4 bg-gray-900 border-r border-gray-700">
           <div className="p-4 border-b border-gray-700 pt-20">
-            <div className="flex space-x-4 mb-4">
-              <button
-                onClick={async () => {
-                  setActiveSection("chats");
-                  if (token) await loadChats(token);
-                }}
-                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  activeSection === "chats"
-                    ? "bg-[#002F63] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
-                }`}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Chats
-              </button>
-              <button
-                onClick={async () => {
-                  setActiveSection("groups");
-                  if (token) await loadChats(token);
-                }}
-                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  activeSection === "groups"
-                    ? "bg-[#002F63] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
-                }`}
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Groups
-              </button>
-            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:space-x-4 sm:space-y-0 space-y-2 mb-4">
+  <button
+    onClick={async () => {
+      setActiveSection("chats");
+      if (token) await loadChats(token);
+    }}
+    className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+      activeSection === "chats"
+        ? "bg-[#002F63] text-white"
+        : "text-gray-400 hover:text-white hover:bg-gray-800"
+    }`}
+  >
+    <MessageCircle className="w-4 h-4 mr-2" />
+    Chats
+  </button>
+
+  <button
+    onClick={async () => {
+      setActiveSection("groups");
+      if (token) await loadChats(token);
+    }}
+    className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+      activeSection === "groups"
+        ? "bg-[#002F63] text-white"
+        : "text-gray-400 hover:text-white hover:bg-gray-800"
+    }`}
+  >
+    <Users className="w-4 h-4 mr-2" />
+    Groups
+  </button>
+</div>
 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-300" />
@@ -794,56 +796,87 @@ const handleSaveProfile = async () => {
                 </label>
 
                 {/* Message Input Area */}
-                <div className="flex-1 relative">
-                  {file ? (
-                    <div className="flex items-center gap-3 p-3 bg-gray-700 rounded-xl border border-gray-600 shadow-inner">
-                      <div className="flex items-center gap-2 flex-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-400">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                        <span className="text-gray-300 text-sm font-medium truncate">{file.name}</span>
-                      </div>
-                      <button 
-                        onClick={() => setFile(null)} 
-                        className="text-red-400 hover:text-red-300 p-1 rounded-full hover:bg-red-900/30 transition-colors duration-200"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <textarea
-                        value={text}
-                        onChange={onTextChange}
-                        onKeyDown={onTextKeyDown}
-                        className="w-full p-4 pr-12 bg-gray-700 text-white placeholder-gray-400 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none shadow-inner"
-                        placeholder="Type your message here..."
-                        rows={1}
-                        style={{ minHeight: '48px', maxHeight: '120px' }}
-                      />
-                      <div className="absolute right-3 bottom-3 text-xs text-gray-500">
-                        {text.length}/1000
-                      </div>
-                    </div>
-                  )}
-                </div>
+                                    <div className="flex-1 relative">
+  {file ? (
+    // FILE SELECTED CASE
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-gray-700 rounded-xl border border-gray-600 shadow-inner w-full">
+      {/* File name */}
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-400 flex-shrink-0">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg>
+        <span
+          title={file.name}
+          className="text-gray-300 text-sm font-medium truncate block flex-1"
+        >
+          {file.name}
+        </span>
+      </div>
 
-                {/* Send Button */}
-                <button 
-                  onClick={send} 
-                  disabled={!text.trim() && !file}
-                  className={`p-3 rounded-xl flex items-center justify-center transition-all duration-200 shadow-md transform ${
-                    text.trim() || file 
-                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:scale-105 hover:shadow-lg text-white' 
-                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                  </svg>
-                </button>
+      {/* ❌ + Send → below on phone, inline on desktop */}
+      <div className="flex gap-2 sm:ml-3">
+        {/* ❌ Cancel */}
+        <button 
+          onClick={() => setFile(null)} 
+          className="text-red-400 hover:text-red-300 p-2 rounded-full hover:bg-red-900/30 transition-colors duration-200"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* ✅ Send inside file block */}
+        <button 
+          onClick={send} 
+          disabled={!file}
+          className={`p-2 rounded-xl flex items-center justify-center transition-all duration-200 shadow-md ${
+            file 
+              ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white' 
+              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  ) : (
+    // TEXT CASE
+    <div className="relative flex-1">
+      <textarea
+        value={text}
+        onChange={onTextChange}
+        onKeyDown={onTextKeyDown}
+        className="w-full p-4 pr-12 bg-gray-700 text-white placeholder-gray-400 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none shadow-inner"
+        placeholder="Type your message here..."
+        rows={1}
+        style={{ minHeight: '48px', maxHeight: '120px' }}
+      />
+      <div className="absolute right-3 bottom-3 text-xs text-gray-500">
+        {text.length}/1000
+      </div>
+    </div>
+  )}
+</div>
+
+{/* ✅ Send button ONLY for text case (since file has its own send) */}
+{!file && (
+  <button 
+    onClick={send} 
+    disabled={!text.trim()}
+    className={`p-3 rounded-xl flex items-center justify-center transition-all duration-200 shadow-md ${
+      text.trim() 
+        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white' 
+        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+    }`}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+    </svg>
+  </button>
+)}
+
               </div>
             </div>
           )}
