@@ -5,8 +5,8 @@ Project: Chat App
 
 * **Samuel Girma** - Backend Developer
 * **Afomiya Mesfin** - Frontend Developer
-* **Danayt Esayas** - Frontend Developer
-* **Kenean Biru** - Frontend Developer
+
+
 
   # Buuna T'et'u Chat Application ☕💬
 
